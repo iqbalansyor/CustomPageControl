@@ -7,23 +7,48 @@
 //
 
 #import "ViewController.h"
+#import "CustomPageControl.h"
 
-@interface ViewController ()
-
+@interface ViewController () <UIScrollViewDelegate>
+@property (weak, nonatomic) IBOutlet UIScrollView *scrollView;
+@property (strong, nonatomic) CustomPageControl *customPageControl;
 @end
 
 @implementation ViewController
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
+    [self addingImageView];
+    [self addPageControl];
 }
 
-
-- (void)didReceiveMemoryWarning {
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+- (void)addingImageView {
+	
+    CGFloat screenWidth = [UIScreen mainScreen].bounds.size.width;
+    CGFloat height = 400.f;
+    NSInteger imageCount = 20;
+    self.scrollView.contentSize = CGSizeMake((imageCount) * screenWidth, height);
+    self.scrollView.contentOffset = CGPointZero;
+    self.scrollView.delegate = self;
+    for (NSInteger i = 0; i < imageCount; i++) {
+        UIImageView *imageView = [UIImageView new];
+        imageView.image = [UIImage imageNamed:@"image1"];
+        imageView.contentMode = UIViewContentModeScaleAspectFit;
+        imageView.frame = CGRectMake(i * screenWidth, 0, screenWidth, height);
+        [self.scrollView addSubview:imageView];
+    }
 }
 
+- (void)addPageControl {
+    CustomPageControl *customPageControl = [[CustomPageControl alloc] init];
+    customPageControl.center = CGPointMake(self.scrollView.center.x, CGRectGetMaxY(self.scrollView.frame) + 16);
+    [customPageControl setNumberOfPages:20];
+    self.customPageControl = customPageControl;
+    [self.view addSubview:customPageControl];
+}
+
+- (void)scrollViewDidScroll:(UIScrollView *)scrollView {
+    [self.customPageControl setProgress:scrollView.contentOffset.x pageWidth:scrollView.bounds.size.width];
+}
 
 @end

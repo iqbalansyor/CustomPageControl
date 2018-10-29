@@ -15,6 +15,7 @@
 		C93A972D2186C476003B0F9C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = C93A972C2186C476003B0F9C /* main.m */; };
 		C93A97372186C476003B0F9C /* CustomPageControlTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C93A97362186C476003B0F9C /* CustomPageControlTests.m */; };
 		C93A97422186C476003B0F9C /* CustomPageControlUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = C93A97412186C476003B0F9C /* CustomPageControlUITests.m */; };
+		C93A97542186DCA0003B0F9C /* CustomPageControl.m in Sources */ = {isa = PBXBuildFile; fileRef = C93A97532186DCA0003B0F9C /* CustomPageControl.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +52,8 @@
 		C93A973D2186C476003B0F9C /* CustomPageControlUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CustomPageControlUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		C93A97412186C476003B0F9C /* CustomPageControlUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CustomPageControlUITests.m; sourceTree = "<group>"; };
 		C93A97432186C476003B0F9C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C93A97522186DCA0003B0F9C /* CustomPageControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CustomPageControl.h; sourceTree = "<group>"; };
+		C93A97532186DCA0003B0F9C /* CustomPageControl.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = CustomPageControl.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +113,8 @@
 				C93A97282186C476003B0F9C /* LaunchScreen.storyboard */,
 				C93A972B2186C476003B0F9C /* Info.plist */,
 				C93A972C2186C476003B0F9C /* main.m */,
+				C93A97522186DCA0003B0F9C /* CustomPageControl.h */,
+				C93A97532186DCA0003B0F9C /* CustomPageControl.m */,
 			);
 			path = CustomPageControl;
 			sourceTree = "<group>";
@@ -265,6 +270,7 @@
 				C93A97222186C474003B0F9C /* ViewController.m in Sources */,
 				C93A972D2186C476003B0F9C /* main.m in Sources */,
 				C93A971F2186C474003B0F9C /* AppDelegate.m in Sources */,
+				C93A97542186DCA0003B0F9C /* CustomPageControl.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
