@@ -65,8 +65,6 @@ typedef NS_ENUM(NSInteger, Direction) {
     dotViewFrame.size.height = self.dotSize;
     [dotView setFrame:dotViewFrame];
     dotView.center = CGPointMake(self.itemSize / 2.f, self.itemSize / 2.f);
-    
-    // todo : customize
     dotView.backgroundColor = [UIColor lightGrayColor];
     dotView.layer.cornerRadius = self.dotSize / 2.f;
     dotView.layer.masksToBounds = YES;
@@ -103,11 +101,6 @@ typedef NS_ENUM(NSInteger, Direction) {
     }
     
     self.dotView.layer.cornerRadius = size.height / 2.0;
-    
-//    UIView.animate(withDuration: animateDuration, animations: { [unowned self] in
-//        self.dotView.layer.bounds.size = _size
-//    }}
-    
     NSTimeInterval animateDuration = 0.2;
     [UIView animateWithDuration:animateDuration animations:^{
         CGRect dotViewFrame =  self.dotView.frame;
@@ -119,18 +112,14 @@ typedef NS_ENUM(NSInteger, Direction) {
 @end
 
 @interface CustomPageControl () <UIScrollViewDelegate>
-
-// Config
-
 @property (nonatomic, assign) NSInteger displayCount;
 @property (nonatomic, assign) CGFloat dotSize;
 @property (nonatomic, assign) CGFloat dotSpace;
 @property (nonatomic, assign) CGFloat smallDotSizeRatio;
 @property (nonatomic, assign) CGFloat mediumDotSizeRatio;
 @property (nonatomic, assign) CGFloat itemSize;
-
-// End - config
-
+@property (nonatomic, strong) UIColor *currentPageDotColor;
+@property (nonatomic, strong) UIColor *pageDotColor;
 @property (nonatomic, strong) UIScrollView *scrollView;
 @property (nonatomic, assign) NSInteger currentPage;
 @property (nonatomic, assign) NSTimeInterval animateDuration;
@@ -139,6 +128,32 @@ typedef NS_ENUM(NSInteger, Direction) {
 @end
 
 @implementation CustomPageControl
+
+
+- (instancetype)initWithNumOfPages:(NSInteger)numOfPages
+                   displayDotCount:(NSInteger)displayDotCount
+                           dotSize:(CGFloat)dotSize
+               currentPageDotColor:(UIColor *)currentPageDotColor
+                      pageDotColor:(UIColor *)pageDotColor {
+    self = [self init];
+    if (self) {
+        _dotSize = dotSize;
+        _currentPageDotColor = currentPageDotColor;
+        _pageDotColor = pageDotColor;
+        _numOfPages = numOfPages;
+        _displayCount = displayDotCount;
+        _dotSpace = 4.0f;
+        _itemSize = _dotSize + _dotSpace;
+        _smallDotSizeRatio = 0.5f;
+        _mediumDotSizeRatio = 0.7f;
+        self.currentPage = 0;
+        self.animateDuration = 0.2f;
+        
+        [self initView];
+        [self setNumOfPages:numOfPages];
+    }
+    return self;
+}
 
 - (instancetype)initWithFrame:(CGRect)frame {
     self = [super initWithFrame:frame];
@@ -150,7 +165,7 @@ typedef NS_ENUM(NSInteger, Direction) {
 }
 
 - (void)initConfig {
-    _displayCount = 7;
+    _displayCount = 3;
     _dotSize = 10.0f;
     _dotSpace = 4.0f;
     _itemSize = _dotSize + _dotSpace;
@@ -159,8 +174,6 @@ typedef NS_ENUM(NSInteger, Direction) {
 }
 
 - (void)initView {
-    self.currentPage = 0;
-    self.animateDuration = 0.2f;
     self.itemViews = [NSMutableArray new];
     [self addSubview:self.scrollView];
 }
@@ -184,6 +197,12 @@ typedef NS_ENUM(NSInteger, Direction) {
     _currentPage = currentPage;
 }
 
+- (void)setNumOfPages:(NSInteger)numOfPages {
+    _numOfPages = numOfPages;
+    self.scrollView.hidden = numOfPages <= 1;
+    [self updateCurrentPage:self.currentPage numOfPages:numOfPages];
+}
+
 - (void)setNumberOfPages:(NSInteger)numOfPages {
     _numOfPages = numOfPages;
     self.scrollView.hidden = numOfPages <= 1;
@@ -196,15 +215,13 @@ typedef NS_ENUM(NSInteger, Direction) {
     self.scrollView.frame = scrollViewFrame;
     self.scrollView.contentSize = CGSizeMake(self.itemSize * numOfPages, self.itemSize);
     
+    // TODO: To better logic and saved memory usage we need to make it reused the unused `ItemView`. Need configure the color updates as well. Research for this later.
+    
     for (NSInteger pageIndex = 0; pageIndex < numOfPages; pageIndex++) {
         ItemView *itemView = [[ItemView alloc] initWithItemSize:self.itemSize dotSize:self.dotSize index:pageIndex];
         [self.itemViews addObject:itemView];
         [self.scrollView addSubview:itemView];
     }
-    
-//    if (self.displayCount < numberOfPage) {
-//        self.scrollView.contentInset = UIEdgeInsetsMake(0, [self getItemSize] * 2, 0, )
-//    }
     
     [self updateDotAtCurrentPage:currentPage animated:NO];
     
@@ -212,8 +229,6 @@ typedef NS_ENUM(NSInteger, Direction) {
 
 - (void)updateDotAtCurrentPage:(NSInteger)currentPage animated:(BOOL)animated {
     [self updateDotColor:currentPage];
-    
-    // add here
     if (self.numOfPages > self.displayCount) {
         [self updateDotPosition:currentPage animated:animated];
         [self updateDotSize:currentPage animated:animated];
@@ -223,10 +238,10 @@ typedef NS_ENUM(NSInteger, Direction) {
 - (void)updateDotColor:(NSInteger)currentPage {
     for (NSInteger pageIndex = 0; pageIndex < self.itemViews.count; pageIndex++) {
         if (pageIndex == currentPage) {
-            self.itemViews[pageIndex].dotColor = [UIColor blueColor];
+            self.itemViews[pageIndex].dotColor = self.currentPageDotColor;
         }
         else {
-            self.itemViews[pageIndex].dotColor = [UIColor lightGrayColor];
+            self.itemViews[pageIndex].dotColor = self.pageDotColor;
         }
     }
 }
@@ -237,10 +252,6 @@ typedef NS_ENUM(NSInteger, Direction) {
         duration = self.animateDuration;
     }
     
-    CGFloat targetXPos = currentPage * self.itemSize;
-    CGFloat targetXPos2 = currentPage * self.itemSize + self.itemSize;
-    CGFloat currentXPos = self.scrollView.contentOffset.x + self.itemSize;
-    CGFloat currentXPos2 = self.scrollView.contentOffset.x + self.scrollView.bounds.size.width - self.itemSize;
     if (currentPage == 0) {
         CGFloat xPos = 0;
         //-self.scrollView.contentInset.left;
@@ -267,9 +278,7 @@ typedef NS_ENUM(NSInteger, Direction) {
 
 - (void)moveScrollView:(CGFloat)xPos animateDuration:(NSTimeInterval)animateDuration {
     Direction direction = [self behaviourDirection:xPos];
-    
-    // TODO: Reused view?
-    
+    //[self reusedView:direction];
     [UIView animateWithDuration:animateDuration animations:^{
         self.scrollView.contentOffset = CGPointMake(xPos, self.scrollView.contentOffset.y);
     }];
@@ -284,6 +293,28 @@ typedef NS_ENUM(NSInteger, Direction) {
         return DirectionLeft;
     } else {
         return DirectionStay;
+    }
+}
+
+- (void)reusedView:(Direction)direction {
+    ItemView *firstItem = [self.itemViews firstObject];
+    ItemView *lastItem = [self.itemViews lastObject];
+    
+    switch (direction) {
+        case DirectionLeft:
+            lastItem.index = firstItem.index - 1;
+            lastItem.frame = CGRectMake(lastItem.index * self.itemSize, 0, self.itemSize, self.itemSize);
+            [self.itemViews insertObject:lastItem atIndex:0];
+            [self.itemViews removeLastObject];
+            break;
+            
+        case  DirectionRight:
+            firstItem.index = lastItem.index + 1;
+            firstItem.frame = CGRectMake(firstItem.index * self.itemSize, 0, self.itemSize, self.itemSize);
+            [self.itemViews insertObject:firstItem atIndex:self.itemViews.count];
+            [self.itemViews removeObjectAtIndex:0];
+        default:
+            break;
     }
 }
 

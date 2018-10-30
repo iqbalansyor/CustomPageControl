@@ -40,9 +40,9 @@
 }
 
 - (void)addPageControl {
-    CustomPageControl *customPageControl = [[CustomPageControl alloc] init];
+    CustomPageControl *customPageControl = [[CustomPageControl alloc] initWithNumOfPages:20 displayDotCount:4 dotSize:10 currentPageDotColor:[UIColor blueColor] pageDotColor:[UIColor lightGrayColor]];
     customPageControl.center = CGPointMake(self.scrollView.center.x, CGRectGetMaxY(self.scrollView.frame) + 16);
-    [customPageControl setNumberOfPages:20];
+    //[customPageControl setNumberOfPages:3];
     self.customPageControl = customPageControl;
     [self.view addSubview:customPageControl];
 }

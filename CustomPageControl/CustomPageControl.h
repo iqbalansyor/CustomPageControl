@@ -8,10 +8,12 @@
 
 #import <UIKit/UIKit.h>
 
-@interface Config : NSObject<NSCopying>
-@end
-
 @interface CustomPageControl : UIView
+- (instancetype)initWithNumOfPages:(NSInteger)numOfPages
+                   displayDotCount:(NSInteger)displayDotCount
+                           dotSize:(CGFloat)dotSize
+               currentPageDotColor:(UIColor *)currentPageDotColor
+                      pageDotColor:(UIColor *)pageDotColor;
+
 - (void)setProgress:(CGFloat)contentOffsetX pageWidth:(CGFloat)pageWidth;
-- (void)setNumberOfPages:(NSInteger)numberOfPages;
 @end
