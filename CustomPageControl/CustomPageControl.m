@@ -15,12 +15,6 @@ typedef NS_ENUM(NSInteger, ItemViewState) {
     ItemViewStateNormal
 };
 
-typedef NS_ENUM(NSInteger, Direction) {
-    DirectionRight,
-    DirectionLeft,
-    DirectionStay
-};
-
 @interface ItemView : UIView
 @property (nonatomic, assign) CGFloat itemSize;
 @property (nonatomic, assign) CGFloat dotSize;
@@ -59,18 +53,7 @@ typedef NS_ENUM(NSInteger, Direction) {
 
 - (void)initView {
     self.backgroundColor = [UIColor clearColor];
-    UIView *dotView = [UIView new];
-    CGRect dotViewFrame = dotView.frame;
-    dotViewFrame.size.width = self.dotSize;
-    dotViewFrame.size.height = self.dotSize;
-    [dotView setFrame:dotViewFrame];
-    dotView.center = CGPointMake(self.itemSize / 2.f, self.itemSize / 2.f);
-    dotView.backgroundColor = [UIColor lightGrayColor];
-    dotView.layer.cornerRadius = self.dotSize / 2.f;
-    dotView.layer.masksToBounds = YES;
-    
-    self.dotView = dotView;
-    [self addSubview:dotView];
+    [self addSubview:self.dotView];
 }
 
 - (void)setDotColor:(UIColor *)dotColor {
@@ -107,6 +90,22 @@ typedef NS_ENUM(NSInteger, Direction) {
         dotViewFrame.size = size;
         [self.dotView setBounds:dotViewFrame];
     }];
+}
+
+- (UIView *)dotView {
+    if (!_dotView) {
+        UIView *dotView = [UIView new];
+        CGRect dotViewFrame = dotView.frame;
+        dotViewFrame.size.width = self.dotSize;
+        dotViewFrame.size.height = self.dotSize;
+        [dotView setFrame:dotViewFrame];
+        dotView.center = CGPointMake(self.itemSize / 2.f, self.itemSize / 2.f);
+        dotView.backgroundColor = [UIColor lightGrayColor];
+        dotView.layer.cornerRadius = self.dotSize / 2.f;
+        dotView.layer.masksToBounds = YES;
+        self.dotView = dotView;
+    }
+    return _dotView;
 }
 
 @end
@@ -150,63 +149,36 @@ typedef NS_ENUM(NSInteger, Direction) {
         self.animateDuration = 0.2f;
         
         [self initView];
-        [self setNumOfPages:numOfPages];
     }
     return self;
-}
-
-- (instancetype)initWithFrame:(CGRect)frame {
-    self = [super initWithFrame:frame];
-    if (self) {
-        [self initConfig];
-        [self initView];
-    }
-    return self;
-}
-
-- (void)initConfig {
-    _displayCount = 3;
-    _dotSize = 10.0f;
-    _dotSpace = 4.0f;
-    _itemSize = _dotSize + _dotSpace;
-    _smallDotSizeRatio = 0.5f;
-    _mediumDotSizeRatio = 0.7f;
 }
 
 - (void)initView {
     self.itemViews = [NSMutableArray new];
     [self addSubview:self.scrollView];
+    self.scrollView.hidden = self.numOfPages <= 1;
+    [self updateCurrentPage:self.currentPage numOfPages:self.numOfPages];
 }
 
 - (void)setProgress:(CGFloat)contentOffsetX pageWidth:(CGFloat)pageWidth {
-    NSInteger currentPage = round(contentOffsetX / pageWidth);
-    [self setCurrentPage:currentPage animated:YES];
+    NSInteger targetPage = round(contentOffsetX / pageWidth);
+    [self setCurrentPage:targetPage animated:YES];
 }
 
 - (void)setCurrentPage:(NSInteger)currentPage animated:(BOOL)animated {
-    if (currentPage > self.numOfPages && self.currentPage < 0) {
+    BOOL isValidPage = currentPage > self.numOfPages && self.currentPage < 0;
+    if (isValidPage) {
         return;
     }
     
-    if (currentPage == self.currentPage) {
+    BOOL isSamePage = currentPage == self.currentPage;
+    if (isSamePage) {
         return;
     }
     
     [self.scrollView.layer removeAllAnimations];
     [self updateDotAtCurrentPage:currentPage animated:YES];
     _currentPage = currentPage;
-}
-
-- (void)setNumOfPages:(NSInteger)numOfPages {
-    _numOfPages = numOfPages;
-    self.scrollView.hidden = numOfPages <= 1;
-    [self updateCurrentPage:self.currentPage numOfPages:numOfPages];
-}
-
-- (void)setNumberOfPages:(NSInteger)numOfPages {
-    _numOfPages = numOfPages;
-    self.scrollView.hidden = numOfPages <= 1;
-    [self updateCurrentPage:self.currentPage numOfPages:numOfPages];
 }
 
 - (void)updateCurrentPage:(NSInteger)currentPage numOfPages:(NSInteger)numOfPages {
@@ -224,7 +196,6 @@ typedef NS_ENUM(NSInteger, Direction) {
     }
     
     [self updateDotAtCurrentPage:currentPage animated:NO];
-    
 }
 
 - (void)updateDotAtCurrentPage:(NSInteger)currentPage animated:(BOOL)animated {
@@ -252,70 +223,33 @@ typedef NS_ENUM(NSInteger, Direction) {
         duration = self.animateDuration;
     }
     
-    if (currentPage == 0) {
+    BOOL isCurrentPageFirstItem = currentPage == 0;
+    BOOL isCurrentPageLastItem = currentPage == self.numOfPages - 1;
+    BOOL isCurrentPageInLeft = currentPage * self.itemSize < self.scrollView.contentOffset.x + self.itemSize;
+    BOOL isCurrentPageInRight = currentPage * self.itemSize + self.itemSize > self.scrollView.contentOffset.x + self.scrollView.bounds.size.width - self.itemSize;
+    
+    if (isCurrentPageFirstItem) {
         CGFloat xPos = 0;
-        //-self.scrollView.contentInset.left;
         [self moveScrollView:xPos animateDuration:duration];
     }
-    else if (currentPage == self.numOfPages - 1) {
+    else if (isCurrentPageLastItem) {
         CGFloat xPos = self.scrollView.contentSize.width - self.scrollView.bounds.size.width;
-        //+ self.scrollView.contentInset.right;
         [self moveScrollView:xPos animateDuration:duration];
     }
-    else if (currentPage * self.itemSize < self.scrollView.contentOffset.x + self.itemSize) {
+    else if (isCurrentPageInLeft) {
         CGFloat xPos = self.scrollView.contentOffset.x - self.itemSize;
         [self moveScrollView:xPos animateDuration:duration];
     }
-    else if (currentPage * self.itemSize + self.itemSize >
-        self.scrollView.contentOffset.x + self.scrollView.bounds.size.width - self.itemSize) {
+    else if (isCurrentPageInRight) {
         CGFloat xPos = self.scrollView.contentOffset.x + self.itemSize;
         [self moveScrollView:xPos animateDuration:duration];
     }
-    
-    //NSLog(@"Item View Index %ld", itemIndex);
-    //NSLog(@" %ld", itemView.state);
 }
 
 - (void)moveScrollView:(CGFloat)xPos animateDuration:(NSTimeInterval)animateDuration {
-    Direction direction = [self behaviourDirection:xPos];
-    //[self reusedView:direction];
     [UIView animateWithDuration:animateDuration animations:^{
         self.scrollView.contentOffset = CGPointMake(xPos, self.scrollView.contentOffset.y);
     }];
-}
-
-- (Direction)behaviourDirection:(CGFloat)targetXPos {
-    
-    if (targetXPos > self.scrollView.contentOffset.x) {
-        return DirectionRight;
-    }
-    else if (targetXPos < self.scrollView.contentOffset.x) {
-        return DirectionLeft;
-    } else {
-        return DirectionStay;
-    }
-}
-
-- (void)reusedView:(Direction)direction {
-    ItemView *firstItem = [self.itemViews firstObject];
-    ItemView *lastItem = [self.itemViews lastObject];
-    
-    switch (direction) {
-        case DirectionLeft:
-            lastItem.index = firstItem.index - 1;
-            lastItem.frame = CGRectMake(lastItem.index * self.itemSize, 0, self.itemSize, self.itemSize);
-            [self.itemViews insertObject:lastItem atIndex:0];
-            [self.itemViews removeLastObject];
-            break;
-            
-        case  DirectionRight:
-            firstItem.index = lastItem.index + 1;
-            firstItem.frame = CGRectMake(firstItem.index * self.itemSize, 0, self.itemSize, self.itemSize);
-            [self.itemViews insertObject:firstItem atIndex:self.itemViews.count];
-            [self.itemViews removeObjectAtIndex:0];
-        default:
-            break;
-    }
 }
 
 - (void)updateDotSize:(NSInteger)currentPage animated:(BOOL)animated {
@@ -326,45 +260,35 @@ typedef NS_ENUM(NSInteger, Direction) {
     
     for (NSInteger itemIndex = 0; itemIndex < self.itemViews.count; itemIndex++) {
         ItemView *itemView = self.itemViews[itemIndex];
-        // TODO: Customize animation
-        //itemView = duration
         
-        if (itemIndex == currentPage) {
+        BOOL isCurrentPage = itemIndex == currentPage;
+        BOOL IsInvalidIndex = itemIndex < 0 || itemIndex > self.numOfPages - 1;
+        BOOL isFirstDotFormLeft = CGRectGetMinX(itemView.frame) <= self.scrollView.contentOffset.x;
+        BOOL isFirstDotFromRight = CGRectGetMaxX(itemView.frame) >= (self.scrollView.contentOffset.x + self.scrollView.bounds.size.width);
+        BOOL isSecondDotFromLeft = CGRectGetMinX(itemView.frame) <= (self.scrollView.contentOffset.x + self.itemSize);
+        BOOL isSecondDotFromRight = CGRectGetMaxX(itemView.frame) >= (self.scrollView.contentOffset.x + self.scrollView.bounds.size.width - self.itemSize);
+        
+        if (isCurrentPage) {
             itemView.state = ItemViewStateNormal;
         }
-        
-        // outside of left
-        else if (itemIndex < 0) {
+        else if (IsInvalidIndex) {
             itemView.state = ItemViewStateNone;
         }
-        
-        // outside of right
-        else if (itemIndex > self.numOfPages - 1) {
-            itemView.state = ItemViewStateNone;
-        }
-        
-        // first dot from left
-        else if (CGRectGetMinX(itemView.frame) <= self.scrollView.contentOffset.x) {
+        else if (isFirstDotFormLeft) {
             itemView.state = ItemViewStateSmall;
         }
-        // first dot from right
-        else if (CGRectGetMaxX(itemView.frame) >= (self.scrollView.contentOffset.x + self.scrollView.bounds.size.width)) {
+        else if (isFirstDotFromRight) {
             itemView.state = ItemViewStateSmall;
         }
-        // second dot from left
-        else if (CGRectGetMinX(itemView.frame) <= (self.scrollView.contentOffset.x + self.itemSize)) {
+        else if (isSecondDotFromLeft) {
             itemView.state = ItemViewStateMedium;
         }
-        // second dot from right
-        else if (CGRectGetMaxX(itemView.frame) >= (self.scrollView.contentOffset.x + self.scrollView.bounds.size.width - self.itemSize)) {
+        else if (isSecondDotFromRight) {
             itemView.state = ItemViewStateMedium;
         }
         else {
             itemView.state = ItemViewStateNormal;
         }
-        
-        //NSLog(@"Item View Index %ld", itemIndex);
-        NSLog(@"Item View State %ld", itemView.state);
     }
 }
 
